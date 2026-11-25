@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Carnet de personnages</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400..600;1,7..72,400..600&display=swap">
+<style>
+:root{color-scheme:light}
+body{margin:0}
+[hidden]{display:none!important}
+/* Disposition : liste des personnages à gauche, fiche à droite ; l'onglet Synthèse rassemble le résumé et tous les liens. */
+:root{
+  --bg:#F2F4F6; --surface:#FFFFFF; --surface-2:#E8ECF0; --field:#FBFCFD;
+  --ink:#18212B; --muted:#58646F; --line:#D6DCE2; --line-strong:#9AA6B2;
+  --accent:#0F6F66; --accent-ink:#FFFFFF; --accent-soft:#DCEEEB; --danger:#B3261E; --warn:#8A5A00;
+  --font-ui:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-write:'Literata',Georgia,'Times New Roman',serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10151B; --surface:#18202A; --surface-2:#212B37; --field:#0E1319;
+    --ink:#E7ECF1; --muted:#9AA6B2; --line:#2A3542; --line-strong:#52626F;
+    --accent:#4DB8AB; --accent-ink:#07201D; --accent-soft:#17302E; --danger:#F2A29C; --warn:#E8B766;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10151B; --surface:#18202A; --surface-2:#212B37; --field:#0E1319;
+  --ink:#E7ECF1; --muted:#9AA6B2; --line:#2A3542; --line-strong:#52626F;
+  --accent:#4DB8AB; --accent-ink:#07201D; --accent-soft:#17302E; --danger:#F2A29C; --warn:#E8B766;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5;
+  padding-block:12px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1080px;margin:0 auto}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h2,h3{margin:0;text-wrap:balance}
+p{margin:0 0 8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.muted{color:var(--muted)}
+
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:8px 0 16px}
+.brand{font-weight:600;font-size:18px;letter-spacing:-.01em;margin-right:auto}
+.tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:10px}
+.tab{border:0;background:transparent;padding:7px 14px;border-radius:7px;font-weight:500;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.14)}
+.status{font-size:13px;color:var(--muted)}
+.status[data-kind="bad"]{color:var(--danger)}
+.status[data-kind="warn"]{color:var(--warn)}
+
+.btn{border:1px solid var(--line-strong);background:var(--surface);padding:7px 12px;border-radius:8px;font-weight:500;line-height:1.3}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--danger);border-color:var(--danger);background:transparent}
+.btn.danger.armed{background:var(--danger);color:var(--bg)}
+.btn.small{padding:4px 10px;font-size:13px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+
+.banner{background:var(--accent-soft);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.banner p{margin:0}
+
+.split{display:grid;grid-template-columns:280px minmax(0,1fr);gap:20px;align-items:start}
+.list-pane{padding:8px}
+.list-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 8px 10px}
+.list-head h2{font-size:15px;font-weight:600}
+.cl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.ci{display:flex;gap:10px;align-items:center;width:100%;text-align:left;border:0;background:transparent;padding:8px;border-radius:8px}
+.ci:hover{background:var(--surface-2)}
+.ci[aria-current="true"]{background:var(--accent-soft)}
+.ci-main{display:flex;flex-direction:column;min-width:0}
+.ci-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-meta{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty-note{padding:10px 8px;color:var(--muted)}
+.av{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:13px}
+.av.xs{width:20px;height:20px;font-size:10px}
+.tag{display:inline-block;background:var(--surface-2);color:var(--muted);font-size:11px;font-weight:500;padding:1px 7px;border-radius:6px;vertical-align:middle}
+
+.ed{padding:22px 26px 28px;min-width:0}
+.back{display:none;margin-bottom:14px}
+@media (max-width:760px){
+  .split{grid-template-columns:minmax(0,1fr)}
+  .split[data-show="list"] .ed{display:none}
+  .split[data-show="editor"] .list-pane{display:none}
+  .back{display:inline-flex}
+  .ed{padding:16px}
+}
+.name-in{width:100%;border:0;border-bottom:2px solid transparent;background:transparent;font-size:26px;font-weight:600;letter-spacing:-.015em;padding:2px 0;border-radius:0}
+.name-in:hover{border-bottom-color:var(--line)}
+.name-in:focus{outline:none;border-bottom-color:var(--accent)}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0;margin-top:16px}
+.fld>span,.lbl{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.in,.ta{width:100%;border:1px solid var(--line-strong);background:var(--field);border-radius:8px;padding:8px 10px;min-width:0}
+.ta{resize:vertical;min-height:84px;line-height:1.55}
+.ta.story{font-family:var(--font-write);font-size:16.5px;line-height:1.7;min-height:300px;padding:14px 16px}
+.ta.write{font-family:var(--font-write);font-size:16px;line-height:1.65;min-height:140px}
+.sec{border-top:1px solid var(--line);margin-top:28px;padding-top:20px}
+.sec h3{font-size:16px;font-weight:600;margin-bottom:4px}
+.sec>.muted{margin-bottom:10px}
+.ed-del{margin-top:30px;border-top:1px solid var(--line);padding-top:18px}
+.ed-empty{padding:30px 6px;text-align:center}
+.ed-empty p{margin-bottom:14px}
+#wc{font-size:12.5px}
+
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:3px 11px 3px 4px;font-size:14px;font-weight:500;max-width:100%}
+button.chip:hover{background:var(--surface-2)}
+.chip.gone{padding-left:11px;color:var(--muted)}
+.lk{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.lk-text{flex:1 1 220px;min-width:0;overflow-wrap:anywhere}
+.lk-text .who{font-weight:500}
+.row-form{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-top:16px}
+.row-form .fld{margin-top:0;flex:1 1 160px}
+.row-form .grow{flex:3 1 240px}
+
+.sy-intro{margin-bottom:8px}
+.sy-intro h2{font-size:22px;letter-spacing:-.015em}
+.sy-card{padding:6px 20px 22px;margin-bottom:16px}
+.pair{font-weight:500}
+.cast{list-style:none;margin:0;padding:0}
+.cast li{display:flex;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.cast li:last-child{border-bottom:0}
+.cast .chip{flex:none}
+.cast .txt{flex:1 1 220px;min-width:0;color:var(--muted)}
+.sub{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Carnet de personnages</div>
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="tab-persos" data-act="tab" data-tab="persos" aria-selected="true">Personnages</button>
+      <button class="tab" role="tab" id="tab-synthese" data-act="tab" data-tab="synthese" aria-selected="false">Synthèse</button>
+    </div>
+    <span id="status" class="status" role="status" aria-live="polite"></span>
+    <button id="btn-export" class="btn" data-act="export">Exporter en Markdown</button>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <main>
+    <section id="view-persos" role="tabpanel" aria-labelledby="tab-persos">
+      <div id="split" class="split" data-show="list">
+        <aside class="card list-pane" aria-label="Liste des personnages">
+          <div class="list-head">
+            <h2>Personnages</h2>
+            <button class="btn primary small" data-act="add-char">Nouveau</button>
+          </div>
+          <ul id="char-list" class="cl"><li class="empty-note">Chargement…</li></ul>
+        </aside>
+
+        <article class="card ed" aria-label="Fiche du personnage">
+          <div id="ed-empty" class="ed-empty" hidden>
+            <p>Créez un premier personnage pour écrire sa fiche et son histoire.</p>
+            <button class="btn primary" data-act="add-char">Nouveau personnage</button>
+          </div>
+          <div id="ed-body" hidden>
+            <button class="btn small back" data-act="back">← Personnages</button>
+            <div id="ed-main"></div>
+            <div id="ed-links"></div>
+            <div class="ed-del" id="ed-del"></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="view-synthese" role="tabpanel" aria-labelledby="tab-synthese" hidden>
+      <div class="sy-intro"><h2>Synthèse</h2></div>
+      <div class="card sy-card">
+        <div id="sy-text"></div>
+      </div>
+      <div class="card sy-card">
+        <div class="sec" style="border-top:0;margin-top:0">
+          <h3>Les personnages</h3>
+          <p class="muted">Un résumé de chaque fiche. Cliquez sur un nom pour ouvrir la fiche.</p>
+          <ul id="sy-cast" class="cast"></ul>
+        </div>
+      </div>
+      <div class="card sy-card">
+        <div class="sec" style="border-top:0;margin-top:0">
+          <h3>Les liens entre les personnages</h3>
+          <p class="muted">Tous les liens écrits dans les fiches, au même endroit. Cliquez sur un nom pour ouvrir sa fiche.</p>
+          <div id="sy-links"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $=(s,r)=>(r||document).querySelector(s);
+const $$=(s,r)=>Array.from((r||document).querySelectorAll(s));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const genId=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+const S={chars:[],links:[],meta:{},loaded:{},sel:null,showEditor:false,tab:'persos',mode:'',focusName:false};
+let B=null,DL=null,lastSaved=false,lastErr='',loadTimer=null,mainSig='',linksSig='';
+const buf={},inflight={},timers={},busy={};
+
+/* ---------- Enregistrement ---------- */
+function dbBackend(db){
+  return {
+    subscribe(coll,cb,err){return db.collection(coll).onSnapshot(s=>cb(s.docs.map(d=>Object.assign({id:d.id},d.data()))),err)},
+    async put(coll,id,data){await db.collection(coll).doc(id).set(data)},
+    async patch(coll,id,patch){
+      const ref=db.collection(coll).doc(id);
+      try{await ref.update(patch)}
+      catch(e){if(e&&e.code==='invalid_argument'){await ref.set(patch)}else{throw e}}
+    },
+    async del(coll,id){await db.collection(coll).doc(id).delete()}
+  };
+}
+function localBackend(){
+  let data={};
+  try{data=JSON.parse(localStorage.getItem('carnet-personnages')||'{}')||{}}catch(e){data={}}
+  const subs={};
+  const save=()=>{try{localStorage.setItem('carnet-personnages',JSON.stringify(data))}catch(e){}};
+  const list=c=>Object.keys(data[c]||{}).map(id=>Object.assign({id},data[c][id]));
+  const emit=c=>(subs[c]||[]).forEach(cb=>cb(list(c)));
+  return {
+    subscribe(c,cb){(subs[c]=subs[c]||[]).push(cb);setTimeout(()=>cb(list(c)),0);return()=>{}},
+    async put(c,id,d){(data[c]=data[c]||{})[id]=d;save();emit(c)},
+    async patch(c,id,p){data[c]=data[c]||{};data[c][id]=Object.assign(data[c][id]||{},p);save();emit(c)},
+    async del(c,id){if(data[c])delete data[c][id];save();emit(c)}
+  };
+}
+function stage(coll,id,patch,now){
+  const p=coll+'/'+id;
+  buf[p]=Object.assign(buf[p]||{},patch);
+  clearTimeout(timers[p]);
+  if(now)flush(coll,id);else timers[p]=setTimeout(()=>flush(coll,id),600);
+  updateStatus();
+}
+async function flush(coll,id){
+  const p=coll+'/'+id;
+  clearTimeout(timers[p]);
+  if(busy[p]||!B)return;
+  busy[p]=true;
+  try{
+    while(buf[p]){
+      const patch=buf[p];delete buf[p];inflight[p]=patch;
+      try{await B.patch(coll,id,patch);lastSaved=true;lastErr=''}catch(e){onErr(e)}
+      delete inflight[p];
+    }
+  }finally{busy[p]=false;updateStatus()}
+}
+function flushAll(){Object.keys(buf).forEach(p=>{const i=p.indexOf('/');flush(p.slice(0,i),p.slice(i+1))})}
+function drop(coll,id){const p=coll+'/'+id;delete buf[p];clearTimeout(timers[p])}
+async function put(coll,id,data){try{await B.put(coll,id,data);lastSaved=true;lastErr='';updateStatus()}catch(e){onErr(e)}}
+async function del(coll,id){drop(coll,id);try{await B.del(coll,id);lastSaved=true;lastErr='';updateStatus()}catch(e){onErr(e)}}
+function setStatus(t,k){const el=$('#status');el.textContent=t;el.dataset.kind=k||''}
+function updateStatus(){
+  const n=Object.keys(buf).length+Object.keys(inflight).length;
+  if(lastErr){setStatus(lastErr,'bad');return}
+  setStatus(n?'Enregistrement…':(lastSaved?'Enregistré':''),'');
+}
+function flash(t){setStatus(t,'warn');setTimeout(updateStatus,4500)}
+function onErr(e){
+  console.error(e);
+  lastErr='Enregistrement impossible'+(e&&e.code==='quota_exceeded'?' : espace plein.':'. Réessayez dans un instant.');
+  updateStatus();
+}
+const overlay=(coll,d)=>{const p=coll+'/'+d.id;return Object.assign({},d,inflight[p],buf[p])};
+function byName(a,b){
+  const x=(a.nom||'').trim(),y=(b.nom||'').trim();
+  if(!x&&y)return 1;if(x&&!y)return -1;
+  return x.localeCompare(y,'fr')||(a.created||0)-(b.created||0);
+}
+function onDocs(coll,docs){
+  const list=docs.map(d=>overlay(coll,d));
+  if(coll==='characters')S.chars=list.sort(byName);
+  else if(coll==='links')S.links=list.sort((a,b)=>(a.created||0)-(b.created||0));
+  else if(coll==='meta')S.meta=list.find(d=>d.id==='synthese')||{};
+  S.loaded[coll]=true;
+  if(S.loaded.characters){clearTimeout(loadTimer);updateStatus()}
+  renderAll();
+}
+
+/* ---------- Aides ---------- */
+const charById=id=>S.chars.find(c=>c.id===id);
+const label=c=>c?((c.nom||'').trim()||'Sans nom'):'Personnage supprimé';
+const initials=c=>{const w=((c&&c.nom)||'').trim().split(/\s+/).filter(Boolean);return((w[0]||'?')[0]+(w[1]?w[1][0]:'')).toUpperCase()};
+const av=(c,cls)=>`<span class="av${cls?' '+cls:''}">${esc(initials(c))}</span>`;
+const words=t=>(t||'').trim().split(/\s+/).filter(Boolean).length;
+const linkText=l=>[l.type,l.note].filter(Boolean).join(' — ');
+function autosize(el){if(!el.scrollHeight)return;el.style.height='auto';el.style.height=(el.scrollHeight+2)+'px'}
+const autosizeAll=root=>$$('textarea',root).forEach(autosize);
+const typing=el=>{const a=document.activeElement;return el.contains(a)&&a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)};
+
+/* ---------- Rendu ---------- */
+function renderAll(){renderList();renderEditor();renderSynth();renderBanner()}
+
+function renderBanner(){
+  const ex=S.chars.some(c=>c.exemple)||S.links.some(l=>l.exemple)||S.meta.exemple;
+  const parts=[];
+  if(S.mode==='local')parts.push('<p><strong>Enregistrement local.</strong> Vos fiches restent dans ce navigateur et ne sont pas partagées.</p>');
+  if(ex)parts.push('<p>Les fiches « Exemple » montrent comment remplir le carnet. Modifiez-les ou supprimez-les.</p><button class="btn small" data-act="rm-examples" data-confirm data-confirm-text="Confirmer : supprimer les exemples">Supprimer les exemples</button>');
+  const b=$('#banner'),html=parts.join('');
+  b.hidden=!parts.length;
+  if(b.dataset.sig!==html){b.innerHTML=html;b.dataset.sig=html}
+}
+
+function renderList(){
+  const ul=$('#char-list');
+  if(!S.chars.length){
+    S.sel=null;
+    ul.innerHTML='<li class="empty-note">'+(S.loaded.characters?'Aucun personnage pour l’instant.':'Chargement…')+'</li>';
+    return;
+  }
+  if(!S.sel||!charById(S.sel))S.sel=S.chars[0].id;
+  ul.innerHTML=S.chars.map(c=>`<li><button class="ci" data-act="select-char" data-id="${esc(c.id)}" data-k="ci:${esc(c.id)}"${c.id===S.sel?' aria-current="true"':''}>${av(c)}<span class="ci-main"><span class="ci-name">${esc(label(c))}${c.exemple?' <span class="tag">Exemple</span>':''}</span><span class="ci-meta">${esc(c.resume||'')}</span></span></button></li>`).join('');
+}
+
+function mainHTML(c){
+  return `
+  <label class="sr" for="f-nom">Nom</label>
+  <input id="f-nom" class="name-in" data-f="nom" value="${esc(c.nom)}" placeholder="Nom du personnage" autocomplete="off">
+  <label class="fld"><span>En une phrase</span><input class="in" data-f="resume" value="${esc(c.resume)}" placeholder="Qui est-il, que lui arrive-t-il ?" autocomplete="off"></label>
+  <div class="fld"><span style="display:flex;justify-content:space-between"><label for="f-histoire">Son histoire</label><span id="wc" class="muted" style="text-transform:none;letter-spacing:0;font-weight:400"></span></span>
+    <textarea id="f-histoire" class="ta story" data-f="histoire" placeholder="Son passé, ce qui l’a façonné, son parcours dans le récit.">\n${esc(c.histoire)}</textarea></div>
+  <label class="fld"><span>Notes</span><textarea class="ta" data-f="notes" placeholder="Idées, pistes, détails à ne pas oublier.">\n${esc(c.notes)}</textarea></label>`;
+}
+function updateWc(){const c=charById(S.sel),el=$('#wc');if(!el||!c)return;const n=words(c.histoire);el.textContent=n+' mot'+(n>1?'s':'')}
+
+function otherChip(id){
+  const c=charById(id);
+  if(!c)return '<span class="chip gone">Personnage supprimé</span>';
+  return `<button type="button" class="chip" data-act="open-char" data-id="${esc(id)}" data-k="open:${esc(id)}">${av(c,'xs')}${esc(label(c))}</button>`;
+}
+function linksHTML(c){
+  const mine=S.links.filter(l=>l.a===c.id||l.b===c.id);
+  const others=S.chars.filter(x=>x.id!==c.id);
+  const rows=mine.map(l=>{
+    const other=l.a===c.id?l.b:l.a;
+    return `<div class="lk">${otherChip(other)}<span class="lk-text">${esc(linkText(l)||'(pas de précision)')}</span><button class="btn small danger" data-act="del-link" data-id="${esc(l.id)}" data-k="dl:${esc(l.id)}" data-confirm>Supprimer</button></div>`;
+  }).join('');
+  const form=others.length?`<form class="row-form" data-form="link" autocomplete="off">
+    <label class="fld"><span>Avec qui ?</span><select class="in" data-lf="b">${others.map(o=>`<option value="${esc(o.id)}">${esc(label(o))}</option>`).join('')}</select></label>
+    <label class="fld grow"><span>Ce qui les relie</span><input class="in" data-lf="note" placeholder="Ex. : frère aîné, ils ne se parlent plus" required></label>
+    <button class="btn primary" type="submit">Ajouter</button></form>`:'<p class="muted">Créez un deuxième personnage pour pouvoir les relier.</p>';
+  return `<section class="sec"><h3>Liens avec les autres personnages</h3>
+    <p class="muted">Écrivez en une phrase ce qui relie ce personnage à un autre.</p>
+    ${rows||'<p class="muted">Aucun lien pour l’instant.</p>'}${form}</section>`;
+}
+
+function renderEditor(force){
+  const c=charById(S.sel);
+  $('#ed-empty').hidden=!!c;
+  $('#ed-body').hidden=!c;
+  $('#split').dataset.show=(S.showEditor&&c)?'editor':'list';
+  if(!c){mainSig='';linksSig='';return}
+  const sig=c.id+'|'+JSON.stringify([c.nom,c.resume,c.histoire,c.notes]);
+  const m=$('#ed-main');
+  if((force||sig!==mainSig)&&(force||!typing(m))){
+    m.innerHTML=mainHTML(c);mainSig=sig;autosizeAll(m);updateWc();
+    if(S.focusName){S.focusName=false;const n=$('#f-nom');if(n)n.focus()}
+  }
+  const l=$('#ed-links');
+  const lsig=c.id+'|'+JSON.stringify(S.links.map(x=>[x.id,x.a,x.b,x.type,x.note]))+'|'+S.chars.map(x=>x.id+x.nom).join(',');
+  if((force||lsig!==linksSig)&&(force||!typing(l))){l.innerHTML=linksHTML(c);linksSig=lsig}
+  $('#ed-del').innerHTML=`<button class="btn danger" data-act="del-char" data-id="${esc(c.id)}" data-confirm data-confirm-text="Confirmer la suppression">Supprimer ce personnage</button>`;
+}
+
+function renderSynth(force){
+  if(S.tab!=='synthese')return;
+  const t=$('#sy-text');
+  if(force||!typing(t)){
+    if(force||t.dataset.sig!==(S.meta.pitch||'')+'|'+(S.meta.themes||'')){
+      t.innerHTML=`<label class="fld"><span>L’histoire d’ensemble</span><textarea class="ta write" data-mf="pitch" placeholder="De quoi parle le récit, et comment les histoires des personnages se rejoignent ?">\n${esc(S.meta.pitch)}</textarea></label>
+      <label class="fld"><span>Thèmes et fils rouges</span><textarea class="ta write" data-mf="themes" style="min-height:90px" placeholder="Ce qui revient d’un personnage à l’autre.">\n${esc(S.meta.themes)}</textarea></label>`;
+      t.dataset.sig=(S.meta.pitch||'')+'|'+(S.meta.themes||'');
+      autosizeAll(t);
+    }
+  }
+  $('#sy-cast').innerHTML=S.chars.length?S.chars.map(c=>`<li><button type="button" class="chip" data-act="open-char" data-id="${esc(c.id)}" data-k="sc:${esc(c.id)}">${av(c,'xs')}${esc(label(c))}</button><span class="txt">${esc(c.resume||'Pas encore de résumé.')}</span></li>`).join(''):'<li class="muted">Aucun personnage pour l’instant.</li>';
+  $('#sy-links').innerHTML=S.links.length?S.links.map(l=>{
+    const a=charById(l.a),b=charById(l.b);
+    return `<div class="lk">${otherChip(l.a)}<span class="muted">et</span>${otherChip(l.b)}<span class="lk-text">${esc(linkText(l)||'(pas de précision)')}</span></div>`;
+  }).join(''):'<p class="muted">Aucun lien pour l’instant. Ajoutez-les depuis la fiche d’un personnage.</p>';
+}
+
+/* ---------- Actions ---------- */
+function setTab(t){
+  S.tab=t;
+  $('#view-persos').hidden=t!=='persos';
+  $('#view-synthese').hidden=t!=='synthese';
+  ['persos','synthese'].forEach(n=>$('#tab-'+n).setAttribute('aria-selected',String(n===t)));
+  if(t==='synthese')renderSynth(true);else renderEditor(true);
+}
+function select(id){
+  S.sel=id;S.showEditor=true;renderList();renderEditor(true);
+  try{if(matchMedia('(max-width:760px)').matches)window.scrollTo({top:0})}catch(e){}
+}
+function addChar(){
+  const id=genId('c');
+  const data={nom:'',resume:'',histoire:'',notes:'',created:Date.now()};
+  S.chars.push(Object.assign({id},data));S.chars.sort(byName);
+  S.loaded.characters=true;
+  setTab('persos');S.focusName=true;select(id);
+  put('characters',id,data);
+}
+function delChar(id){
+  S.links.filter(l=>l.a===id||l.b===id).forEach(l=>del('links',l.id));
+  S.chars=S.chars.filter(c=>c.id!==id);
+  S.links=S.links.filter(l=>l.a!==id&&l.b!==id);
+  if(S.sel===id){S.sel=null;S.showEditor=false}
+  renderAll();
+  del('characters',id);
+}
+function removeExamples(){
+  const ex=S.chars.filter(c=>c.exemple).map(c=>c.id);
+  S.links.forEach(l=>{if(l.exemple||ex.includes(l.a)||ex.includes(l.b))del('links',l.id)});
+  ex.forEach(id=>del('characters',id));
+  if(S.meta.exemple)del('meta','synthese');
+}
+const nm=id=>label(charById(id));
+function buildMd(){
+  const L=['# Carnet de personnages','','_Exporté le '+new Date().toLocaleDateString('fr-FR')+'_',''];
+  if(S.meta.pitch||S.meta.themes){
+    L.push('## Synthèse','');
+    if(S.meta.pitch)L.push(S.meta.pitch,'');
+    if(S.meta.themes)L.push('### Thèmes et fils rouges','',S.meta.themes,'');
+  }
+  L.push('## Personnages','');
+  S.chars.forEach(c=>{
+    L.push('### '+label(c));
+    if(c.resume)L.push('',c.resume);
+    L.push('');
+    if(c.histoire)L.push('#### Histoire','',c.histoire,'');
+    if(c.notes)L.push('#### Notes','',c.notes,'');
+    const mine=S.links.filter(l=>l.a===c.id||l.b===c.id);
+    if(mine.length){L.push('#### Liens','');mine.forEach(l=>L.push('- '+nm(l.a===c.id?l.b:l.a)+' : '+(linkText(l)||'lié')));L.push('')}
+  });
+  if(S.links.length){
+    L.push('## Tous les liens','');
+    S.links.forEach(l=>L.push('- '+nm(l.a)+' et '+nm(l.b)+' : '+(linkText(l)||'lié')));
+    L.push('');
+  }
+  return L.join('\n');
+}
+async function exportMd(){
+  const md=buildMd();
+  try{
+    if(DL){await DL.save({filename:'carnet-de-personnages.md',data:md});flash('Export enregistré.');return}
+    const url=URL.createObjectURL(new Blob([md],{type:'text/markdown;charset=utf-8'}));
+    const a=document.createElement('a');a.href=url;a.download='carnet-de-personnages.md';
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    flash('Export téléchargé.');
+  }catch(e){if(!e||e.code!=='declined')flash('Export impossible.')}
+}
+function arm(el){
+  el.dataset.armed='1';el.dataset.label=el.textContent;
+  el.textContent=el.dataset.confirmText||'Confirmer';el.classList.add('armed');
+  setTimeout(()=>{if(el.isConnected&&el.dataset.armed){delete el.dataset.armed;el.textContent=el.dataset.label;el.classList.remove('armed')}},4000);
+}
+
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  if(el.hasAttribute('data-confirm')&&!el.dataset.armed){arm(el);return}
+  const id=el.dataset.id;
+  switch(el.dataset.act){
+    case 'tab':setTab(el.dataset.tab);break;
+    case 'select-char':select(id);break;
+    case 'open-char':setTab('persos');select(id);break;
+    case 'back':S.showEditor=false;renderEditor();break;
+    case 'add-char':addChar();break;
+    case 'del-char':delChar(id);break;
+    case 'del-link':S.links=S.links.filter(l=>l.id!==id);renderAll();del('links',id);break;
+    case 'export':exportMd();break;
+    case 'rm-examples':removeExamples();break;
+  }
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.matches&&t.matches('textarea'))autosize(t);
+  const f=t.dataset&&t.dataset.f;
+  if(f){
+    const c=charById(S.sel);if(!c)return;
+    c[f]=t.value;c.exemple=false;
+    stage('characters',c.id,{[f]:t.value,exemple:false});
+    if(f==='histoire')updateWc();
+    if(f==='nom'||f==='resume')renderList();
+    mainSig=c.id+'|'+JSON.stringify([c.nom,c.resume,c.histoire,c.notes]);
+    renderBanner();
+  }else if(t.dataset&&t.dataset.mf){
+    S.meta[t.dataset.mf]=t.value;S.meta.exemple=false;
+    $('#sy-text').dataset.sig=(S.meta.pitch||'')+'|'+(S.meta.themes||'');
+    stage('meta','synthese',{[t.dataset.mf]:t.value,exemple:false});
+    renderBanner();
+  }
+});
+document.addEventListener('submit',e=>{
+  e.preventDefault();
+  const f=e.target;
+  if(f.dataset.form!=='link')return;
+  const a=S.sel,bEl=f.querySelector('[data-lf="b"]'),nEl=f.querySelector('[data-lf="note"]');
+  const b=bEl&&bEl.value,note=nEl?nEl.value.trim():'';
+  if(!a||!b||a===b||!note){flash('Choisissez un personnage et écrivez ce qui les relie.');return}
+  const id=genId('l'),data={a,b,type:'',note,created:Date.now()};
+  S.links.push(Object.assign({id},data));
+  renderEditor(true);renderSynth();
+  put('links',id,data);
+});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)flushAll()});
+window.addEventListener('pagehide',flushAll);
+
+(async function init(){
+  renderAll();
+  let db=null;
+  try{db=(window.claude&&window.claude.use)?await window.claude.use('db'):null}catch(e){db=null}
+  if(db){B=dbBackend(db);S.mode='db'}else{B=localBackend();S.mode='local'}
+  loadTimer=setTimeout(()=>{if(!S.loaded.characters)setStatus('Vos fiches ne répondent pas encore…','warn')},10000);
+  ['characters','links','meta'].forEach(c=>B.subscribe(c,docs=>onDocs(c,docs),onErr));
+  try{DL=(window.claude&&window.claude.use)?await window.claude.use('downloads'):null}catch(e){DL=null}
+  $('#btn-export').hidden=false;
+  renderBanner();
+})();
+})();
+</script>
+</body>
+</html>
